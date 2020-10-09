@@ -16,6 +16,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.View;
 import android.widget.EditText;
 
@@ -63,7 +64,17 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothGattCharacteristic buttonCharacteristic, ledCharacteristic;
     private BluetoothGattCharacteristic rxCharacteristic,txCharacteristic;
 
-    public static int PERMISSION_REQUEST_ID=5;
+    public String FILE_SAVE_PATH = this.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath();
+    public String FILE_NAME;
+
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static final int PERMISSION_REQUEST_ID=3;
+    private static String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+
+
     private BluetoothAdapter mBluetoothAdapter;
     public BleDevice myBleDevice;
 
@@ -74,9 +85,21 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        sdPermissionRequest();
         locationPermissionRequest();
         initBle();
         // 一定要扫描到了才能开始连接，因此连接代码不能放到这里
+    }
+
+    public void sdPermissionRequest(){
+        //一进入程序就向用户申请权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {//android 6.0以上
+            //进入程序，申请读写权限
+            int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            if (permission != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+            }
+        }
     }
 
     public void locationPermissionRequest() {
