@@ -21,6 +21,7 @@ import android.view.View;
 import android.widget.EditText;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import cc.noharry.blelib.ble.BleAdmin;
@@ -64,8 +65,7 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothGattCharacteristic buttonCharacteristic, ledCharacteristic;
     private BluetoothGattCharacteristic rxCharacteristic,txCharacteristic;
 
-    public String FILE_SAVE_PATH = this.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath();
-    public String FILE_NAME;
+    public String FILE_SAVE_PATH = Objects.requireNonNull(this.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)).getAbsolutePath();
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static final int PERMISSION_REQUEST_ID=3;
@@ -85,8 +85,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         sdPermissionRequest();
+        if (this.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) == null) {
+            FILE_SAVE_PATH = "No Path";
+        }
+        else {
+            FILE_SAVE_PATH = Objects.requireNonNull(this.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)).getAbsolutePath();
+        }
         locationPermissionRequest();
+
         initBle();
         // 一定要扫描到了才能开始连接，因此连接代码不能放到这里
     }
@@ -331,6 +339,7 @@ public class MainActivity extends AppCompatActivity {
             public void onDataRecived(BleDevice bleDevice, Data data) {
                 //读到的数据
                 L.i("LED READ DATA:"+data.toString());
+                AdcDataManager.saveToSd(FILE_SAVE_PATH,data.toString());
             }
 
             @Override

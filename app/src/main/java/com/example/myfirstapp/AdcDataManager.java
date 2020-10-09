@@ -4,7 +4,6 @@ import android.os.Environment;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -12,15 +11,20 @@ import cc.noharry.blelib.util.L;
 
 public class AdcDataManager {
 
-    public int num = 0;
+    public static int num = 0;
 
-    public boolean saveToSd(String path,String data) {
+    public static boolean saveToSd(String path,String data) {
         if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
             L.i("SD CARD NOT FOUND");
             return false;
         }
 
-        File dataLog = new File(path+"/dataLog.txt");
+        if(path=="No Path"){
+            L.i(path);
+            return false;
+        }
+
+        File dataLog = new File(path+"/"+"dataLog.txt");
         if(!dataLog.exists()) {
             try {
                 dataLog.createNewFile();
@@ -30,6 +34,7 @@ public class AdcDataManager {
                 dataLogWriteStream.close();
             } catch (IOException e) {
                 e.printStackTrace();
+                return false;
             }
         }else{
             try {
@@ -56,6 +61,7 @@ public class AdcDataManager {
                 dataFile.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
+                return false;
             }
         }
         try {
