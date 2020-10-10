@@ -2,10 +2,14 @@ package com.example.myfirstapp;
 
 import android.os.Environment;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.DirectoryIteratorException;
 
 import cc.noharry.blelib.util.L;
 
@@ -14,7 +18,7 @@ public class AdcDataManager {
     public static int num = 0;
 
     public static boolean saveToSd(String path,String data) {
-        if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+        if(!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
             L.i("SD CARD NOT FOUND");
             return false;
         }
@@ -24,30 +28,35 @@ public class AdcDataManager {
             return false;
         }
 
+        L.i("PATH:"+path);
+
+        File pathDir = new File(path);
+        if(!pathDir.exists()){
+            pathDir.mkdir();
+        }
+
         File dataLog = new File(path+"/"+"dataLog.txt");
         if(!dataLog.exists()) {
             try {
                 dataLog.createNewFile();
-                FileOutputStream dataLogWriteStream = new FileOutputStream(dataLog);
-                dataLogWriteStream.write("1".getBytes());
-                num=1;
-                dataLogWriteStream.close();
+                FileWriter writer = new FileWriter(dataLog);
+                writer.write("1");
+                writer.close();
             } catch (IOException e) {
                 e.printStackTrace();
                 return false;
             }
         }else{
             try {
-                FileInputStream dataLogReadStream = new FileInputStream(dataLog);
-                // 代表从开头写
-                FileOutputStream dataLogWriteStream = new FileOutputStream(dataLog,false);
-                byte[] b = new byte[10];
-                dataLogReadStream.read(b);
-                num=Integer.getInteger(b.toString());
+                BufferedReader reader =new BufferedReader(new FileReader(dataLog.getAbsolutePath()));
+                String numStr=reader.readLine();
+                num = Integer.parseInt(numStr);
+                reader.close();
                 num++;
-                dataLogWriteStream.write(String.valueOf(num).getBytes());
-                dataLogReadStream.close();
-                dataLogWriteStream.close();
+                // 代表从开头写
+                FileWriter writer = new FileWriter(dataLog);
+                writer.write(String.valueOf(num));
+                writer.close();
             } catch (Exception e) {
                 e.printStackTrace();
                 return false;

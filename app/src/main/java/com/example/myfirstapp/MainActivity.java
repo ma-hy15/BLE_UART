@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothGattCharacteristic buttonCharacteristic, ledCharacteristic;
     private BluetoothGattCharacteristic rxCharacteristic,txCharacteristic;
 
-    public String FILE_SAVE_PATH = Objects.requireNonNull(this.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)).getAbsolutePath();
+    public String FILE_SAVE_PATH;
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static final int PERMISSION_REQUEST_ID=3;
@@ -87,12 +87,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         sdPermissionRequest();
-        if (this.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) == null) {
-            FILE_SAVE_PATH = "No Path";
-        }
-        else {
-            FILE_SAVE_PATH = Objects.requireNonNull(this.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)).getAbsolutePath();
-        }
         locationPermissionRequest();
 
         initBle();
@@ -107,6 +101,16 @@ public class MainActivity extends AppCompatActivity {
             if (permission != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
             }
+            permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+            if (permission != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+            }
+        }
+        if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            L.i("SD CARD FOUND");
+            FILE_SAVE_PATH = Objects.requireNonNull(this.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)).getAbsolutePath();
+        }else {
+            FILE_SAVE_PATH = "No Path";
         }
     }
 
@@ -273,6 +277,7 @@ public class MainActivity extends AppCompatActivity {
             public void onDataChange(BleDevice bleDevice, Data data) {
                 // 收到通知
                 L.i("Receive ADC Data:"+data.toString());
+                AdcDataManager.saveToSd(FILE_SAVE_PATH,data.toString());
             }
 
             @Override
@@ -339,7 +344,6 @@ public class MainActivity extends AppCompatActivity {
             public void onDataRecived(BleDevice bleDevice, Data data) {
                 //读到的数据
                 L.i("LED READ DATA:"+data.toString());
-                AdcDataManager.saveToSd(FILE_SAVE_PATH,data.toString());
             }
 
             @Override
