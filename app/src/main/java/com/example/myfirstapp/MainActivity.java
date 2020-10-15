@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_ENABLE_BT = 2;
     public boolean isFuzzy = true;
+    public boolean isScanning = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void initBle() {
         // Initializes Bluetooth adapter.
+        isScanning = true;
         final BluetoothManager bluetoothManager =
                 (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
@@ -156,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
                 //会在扫描时间结束或者主动调用stopScan()时发生回调
                 //回调出的设备为该过程中扫描到的所有设备，已过滤重复设备
                 L.i("Scan Completed");
+                isScanning =false;
                 if(deviceList!=null) {
 //                    for(int index=0;index<deviceList.size();index++){
 //                        L.i("Device"+index+":"+deviceList.get(index).getName());
@@ -214,6 +217,7 @@ public class MainActivity extends AppCompatActivity {
                 //断开连接
                 L.i("Disconnected with "+bleDevice.getName());
                 myBleDevice = null;
+                isScanning =false;
             }
 
             @Override
@@ -417,11 +421,19 @@ public class MainActivity extends AppCompatActivity {
 //        startActivity(intent);
     }
 
-    /** Called when the user taps the Send buttonconnect */
+    /** Called when the user taps the button DISCONNECT */
     public void disconnectBle(View view) {
         // Do something in response to button
         if(myBleDevice!=null) {
             BleAdmin.getINSTANCE(getApplication()).disconnect(myBleDevice);
+        }
+    }
+
+    /** Called when the user taps the button CONNECT */
+    public void connectBle(View view){
+        // Do something in response to button
+        if((myBleDevice == null)&&(isScanning == false)){
+            initBle();
         }
     }
 }
