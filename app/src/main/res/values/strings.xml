@@ -2,6 +2,12 @@
     <string name="app_name">My First App</string>
     <string name="edit_message">Enter a message</string>
     <string name="button_send">Send</string>
-    <string name="ble_disconnect">DISCONNECT</string>
-    <string name="ble_connect">CONNECT</string>
+    <string name="ble_disconnect">Disconnect</string>
+    <string name="ble_connect">Connect</string>
+    <string name="ble_disconnectAll">DisconnectAll</string>
+    <string name="ble_connectAll">ConnectAll</string>
+    <string name="enableNusRx">EnableDataSend</string>
+    <string name="disableNusRx">DisableDataSend</string>
+    <string name="reScan">ReScan</string>
+    <string name="device_operated">DEVICE NUMBER</string>
 </resources>

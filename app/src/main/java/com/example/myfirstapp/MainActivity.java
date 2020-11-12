@@ -19,7 +19,11 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -76,7 +80,9 @@ public class MainActivity extends AppCompatActivity {
 
 
     private BluetoothAdapter mBluetoothAdapter;
-    public BleDevice myBleDevice;
+    public ArrayList<AdvancedBleDevice> myBleDeviceList = new ArrayList<AdvancedBleDevice>();
+    public HashMap<String,AdvancedBleDevice> myBleDeviceMap = new HashMap<String, AdvancedBleDevice>();
+    public AdvancedBleDevice myBleDevice;
 
     private static final int REQUEST_ENABLE_BT = 2;
     public boolean isFuzzy = true;
@@ -136,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
         //String Name="Nordic_UART";
         BleScanConfig scanConfig = new BleScanConfig.Builder()
                 //.setDeviceMac(new String[]{"F2:F4:FC:5F:DF:0E"})
-                .setDeviceName(new String[]{DEVICE_NAME},isFuzzy)
+                .setDeviceName(new String[]{"Nordic"},isFuzzy)
                 .setScanTime(5000)
                 .build();
         // 扫描结果回调
@@ -160,26 +166,28 @@ public class MainActivity extends AppCompatActivity {
                 L.i("Scan Completed");
                 isScanning =false;
                 if(deviceList!=null) {
-//                    for(int index=0;index<deviceList.size();index++){
-//                        L.i("Device"+index+":"+deviceList.get(index).getName());
-//                        if(deviceList.get(index).getName()=="Nordic_Blinky")
-//                            myBleDevice = deviceList.get(index);
-//                    }
-                    myBleDevice = deviceList.get(0);
+                    for(int index=0;index<deviceList.size();index++){
+                        L.i("Device"+index+":"+deviceList.get(index).getName());
+                        if(deviceList.get(index).getName().contains("Nordic")) {
+                            myBleDeviceMap.put(deviceList.get(index).getName(), new AdvancedBleDevice(deviceList.get(index)));
+                        }
+                    }
+//                    myBleDevice = deviceList.get(0);
                     L.i("STOP TO FIND IT");
                 }
-                if(myBleDevice!=null){
-                    connectBle();
-                }
+                setDeviceList();
+                isScanning=false;
             }
         };
         // 开始扫描
+        myBleDeviceMap.clear();
         BleAdmin
                 .getINSTANCE(getApplication())
                 .scan(scanConfig,mBleScanCallback);
+        isScanning=true;
     }
 
-    public void connectBle() {
+    public void connectBle(String device_name) {
         // 连接回调
         BleConnectCallback mBleConnectCallback = new BleConnectCallback() {
             @Override
@@ -191,19 +199,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onDeviceConnected(BleDevice bleDevice) {
                 //连接成功
-                L.i("Connect Success");
+                L.i("Connect Success:"+bleDevice.getName());
+                Toast.makeText(getApplicationContext(),"Connect Success:"+bleDevice.getName(),Toast.LENGTH_SHORT);
+                myBleDeviceMap.get(bleDevice.getName()).isConnected=true;
             }
 
             @Override
             public void onServicesDiscovered(BleDevice bleDevice, BluetoothGatt gatt, int status) {
-                //发现服务,由onServicesDiscoveredBase回调出的新线程
-                if(bleDevice!=null) {
-                    //L.i("Service Discovered:"+gatt.getService(NUS_UUID_SERVICE).toString());
-                }
-                //发现服务后再开始操作
-                if(myBleDevice!=null){
-                    bleDataHandle();
-                }
+//                //发现服务,由onServicesDiscoveredBase回调出的新线程
+//                if(bleDevice!=null) {
+//                    //L.i("Service Discovered:"+gatt.getService(NUS_UUID_SERVICE).toString());
+//                }
+//                //发现服务后再开始操作
+//                if(myBleDevice!=null){
+//                    bleDataHandle();
+//                }
             }
 
             @Override
@@ -239,10 +249,10 @@ public class MainActivity extends AppCompatActivity {
         //开始连接
         BleAdmin
                 .getINSTANCE(getApplication())
-                .connect(myBleDevice,false,mBleConnectCallback,5000);
+                .connect(myBleDeviceMap.get(device_name),false,mBleConnectCallback,20000);
     }
 
-    public void bleDataHandle() {
+    public void bleDataHandle(BleDevice bleDevice) {
 
         //更改MTU大小为247
         MtuCallback mMtuCallback = new MtuCallback() {
@@ -266,22 +276,22 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onComplete(BleDevice bleDevice) {
                 L.i("MTU OPERATION COMPLETED");
-                enableNusRx();
+                //enableNusRx();
                 //NusTx("123456".getBytes());
             }
         };
-        MtuTask mtuTask = Task.newMtuTask(myBleDevice,MTU_SIZE).with(mMtuCallback);
+        MtuTask mtuTask = Task.newMtuTask(bleDevice,MTU_SIZE).with(mMtuCallback);
         BleAdmin.getINSTANCE(getApplication()).addTask(mtuTask);
     }
 
-    public void enableNusRx(){
+    public void enableNusRx(BleDevice bleDevice){
         //打开通知
         DataChangeCallback mDataChangeCallback = new DataChangeCallback() {
             @Override
             public void onDataChange(BleDevice bleDevice, Data data) {
                 // 收到通知
-                L.i("Receive ADC Data:"+data.toString());
-                AdcDataManager.saveToSd(FILE_SAVE_PATH,data.toString());
+                L.i("Receive ADC Data From "+bleDevice.getName()+": "+data.toString());
+                //AdcDataManager.saveToSd(FILE_SAVE_PATH,data.toString());
             }
 
             @Override
@@ -302,10 +312,58 @@ public class MainActivity extends AppCompatActivity {
                 L.i("ENABLE RX NOTIFICATION COMPLETED");
             }
         };
+//        // Give time to sensor_init()
+//        try {
+//            Thread.sleep(10);
+//        }catch (InterruptedException e){
+//            e.printStackTrace();
+//            L.i("SLEEP EXCEPTION");
+//        }
         WriteTask enableTask = Task
-                .newEnableNotificationsTask(myBleDevice, rxCharacteristic)
+                .newEnableNotificationsTask(bleDevice, rxCharacteristic)
                 .with(mDataChangeCallback);
         BleAdmin.getINSTANCE(getApplication()).addTask(enableTask);
+    }
+
+    public void disableNusRx(BleDevice bleDevice){
+        //打开通知
+        DataChangeCallback mDataChangeCallback = new DataChangeCallback() {
+            @Override
+            public void onDataChange(BleDevice bleDevice, Data data) {
+                // 收到通知
+                //L.i("Receive ADC Data:"+data.toString());
+                //AdcDataManager.saveToSd(FILE_SAVE_PATH,data.toString());
+            }
+
+            @Override
+            public void onOperationSuccess(BleDevice bleDevice) {
+                // 操作成功
+                L.i("DISABLE RX NOTIFICATION SUCCESS");
+            }
+
+            @Override
+            public void onFail(BleDevice bleDevice, int statuCode, String message) {
+                // 启动失败
+                L.i("DISABLE RX NOTIFICATION FAILED");
+            }
+
+            @Override
+            public void onComplete(BleDevice bleDevice) {
+                // 操作完成
+                L.i("DISABLE RX NOTIFICATION COMPLETED");
+            }
+        };
+//        // Give time to sensor_init()
+//        try {
+//            Thread.sleep(10);
+//        }catch (InterruptedException e){
+//            e.printStackTrace();
+//            L.i("SLEEP EXCEPTION");
+//        }
+        WriteTask disableTask = Task
+                .newDisableNotificationsTask(bleDevice, rxCharacteristic)
+                .with(mDataChangeCallback);
+        BleAdmin.getINSTANCE(getApplication()).addTask(disableTask);
     }
 
     public void NusTx(byte[] data){
@@ -421,19 +479,122 @@ public class MainActivity extends AppCompatActivity {
 //        startActivity(intent);
     }
 
-    /** Called when the user taps the button DISCONNECT */
-    public void disconnectBle(View view) {
+    public void setDeviceList()
+    {
+        TextView textView = (TextView) findViewById(R.id.deviceList);
+        String device_text = "";
+        if(myBleDeviceMap.isEmpty())
+        {
+            textView.setText("NO DEVICE FOUND");
+            return;
+        }
+        for(String device_name:myBleDeviceMap.keySet())
+        {
+            device_text = device_text+device_name+":"+myBleDeviceMap.get(device_name).getMac()+"\n";
+        }
+        textView.setText(device_text);
+    }
+
+    /** Called when the user taps the button DISCONNECT1 */
+    public void disconnectDevice(View view) {
         // Do something in response to button
-        if(myBleDevice!=null) {
-            BleAdmin.getINSTANCE(getApplication()).disconnect(myBleDevice);
+        EditText editText = (EditText) findViewById(R.id.current_device);
+        String device_name = "Nordic"+editText.getText().toString();
+        if(myBleDeviceMap.containsKey(device_name))
+        {
+            myBleDevice = myBleDeviceMap.get(device_name);
+            if((myBleDevice!=null)&&(myBleDevice.isConnected))
+            {
+                BleAdmin.getINSTANCE(getApplication()).disconnect(myBleDevice);
+                myBleDevice.isConnected=false;
+                Toast.makeText(getApplication(),"DISCONNECT SUCCESSFUL WITH: "+myBleDevice.getName(),Toast.LENGTH_LONG);
+            }
         }
     }
 
     /** Called when the user taps the button CONNECT */
-    public void connectBle(View view){
+    public void connectDevice(View view) {
         // Do something in response to button
-        if((myBleDevice == null)&&(isScanning == false)){
+        EditText editText = (EditText) findViewById(R.id.current_device);
+        String device_name = "Nordic"+editText.getText().toString();
+        if(myBleDeviceMap.containsKey(device_name))
+        {
+            myBleDevice = myBleDeviceMap.get(device_name);
+            if((myBleDevice!=null)&&(!myBleDevice.isConnected))
+            {
+                connectBle(device_name);
+            }
+        }
+    }
+
+    public void connectAll(View view){
+        if(myBleDeviceMap.isEmpty()) {
+            return;
+        }
+        for(String device_name:myBleDeviceMap.keySet())
+        {
+            myBleDevice = myBleDeviceMap.get(device_name);
+            if((myBleDevice!=null)&&(!myBleDevice.isConnected))
+            {
+                connectBle(device_name);
+            }
+        }
+    }
+
+    public void disconnectAll(View view){
+        if(myBleDeviceMap.isEmpty()) {
+            return;
+        }
+        for(String device_name:myBleDeviceMap.keySet())
+        {
+            myBleDevice = myBleDeviceMap.get(device_name);
+            if((myBleDevice!=null)&&(myBleDevice.isConnected))
+            {
+                BleAdmin.getINSTANCE(getApplication()).disconnect(myBleDevice);
+                myBleDevice.isConnected=false;
+            }
+        }
+    }
+
+    public void reScan(View view){
+        if(!isScanning) {
+            disconnectAll(view);
             initBle();
         }
     }
+
+    public void setMtuAll(View view){
+        if(!isScanning){
+            for(String device_name:myBleDeviceMap.keySet()) {
+                myBleDevice = myBleDeviceMap.get(device_name);
+                if((myBleDevice!=null)&&(myBleDevice.isConnected)) {
+                    bleDataHandle(myBleDevice);
+                }
+            }
+        }
+    }
+
+    public void enableNotifyAll(View view){
+//        setMtuAll(view);
+        if(!isScanning){
+            for(String device_name:myBleDeviceMap.keySet()) {
+                myBleDevice = myBleDeviceMap.get(device_name);
+                if((myBleDevice!=null)&&(myBleDevice.isConnected)) {
+                    enableNusRx(myBleDevice);
+                }
+            }
+        }
+    }
+
+    public void disableNotifyAll(View view){
+        if(!isScanning){
+            for(String device_name:myBleDeviceMap.keySet()) {
+                myBleDevice = myBleDeviceMap.get(device_name);
+                if((myBleDevice!=null)&&(myBleDevice.isConnected)) {
+                    disableNusRx(myBleDevice);
+                }
+            }
+        }
+    }
 }
+

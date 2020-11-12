@@ -18,6 +18,7 @@
         android:importantForAutofill="no"
         android:inputType="textPersonName"
         app:layout_constraintEnd_toStartOf="@+id/buttonsend"
+        app:layout_constraintHorizontal_bias="0.51"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -26,39 +27,120 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         android:onClick="sendMessage"
         android:text="@string/button_send"
-        app:layout_constraintBaseline_toBaselineOf="@+id/editText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/editText" />
+        app:layout_constraintStart_toEndOf="@+id/editText"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/buttondisconnect"
-        android:layout_width="360dp"
-        android:layout_height="64dp"
-        android:layout_marginStart="24dp"
+        android:layout_width="135dp"
+        android:layout_height="43dp"
         android:layout_marginTop="24dp"
         android:layout_marginEnd="24dp"
-        android:onClick="disconnectBle"
+        android:onClick="disconnectDevice"
         android:text="@string/ble_disconnect"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.473"
+        app:layout_constraintTop_toBottomOf="@+id/current_device" />
+
+    <Button
+        android:id="@+id/buttondisconnectall"
+        android:layout_width="134dp"
+        android:layout_height="44dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="24dp"
+        android:onClick="disconnectAll"
+        android:text="@string/ble_disconnectAll"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttondisconnect" />
+
+    <Button
+        android:id="@+id/buttonconnectall"
+        android:layout_width="148dp"
+        android:layout_height="41dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="32dp"
+        android:onClick="connectAll"
+        android:text="@string/ble_connectAll"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/buttonsend" />
+        app:layout_constraintTop_toBottomOf="@+id/buttonconnect" />
+
+    <Button
+        android:id="@+id/buttonconnectall3"
+        android:layout_width="135dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="24dp"
+        android:onClick="disableNotifyAll"
+        android:text="@string/disableNusRx"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttondisconnectall" />
+
+    <Button
+        android:id="@+id/buttonconnectall5"
+        android:layout_width="148dp"
+        android:layout_height="41dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="32dp"
+        android:onClick="enableNotifyAll"
+        android:text="@string/enableNusRx"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonconnectall" />
+
+    <Button
+        android:id="@+id/buttonconnectall2"
+        android:layout_width="171dp"
+        android:layout_height="47dp"
+        android:layout_marginStart="128dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="128dp"
+        android:onClick="reScan"
+        android:text="@string/reScan"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonconnectall3" />
 
     <Button
         android:id="@+id/buttonconnect"
-        android:layout_width="0dp"
-        android:layout_height="56dp"
+        android:layout_width="148dp"
+        android:layout_height="41dp"
         android:layout_marginStart="24dp"
         android:layout_marginTop="24dp"
-        android:layout_marginEnd="24dp"
-        android:onClick="connectBle"
+        android:onClick="connectDevice"
         android:text="@string/ble_connect"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.409"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/buttondisconnect" />
+        app:layout_constraintTop_toBottomOf="@+id/current_device" />
+
+    <TextView
+        android:id="@+id/deviceList"
+        android:layout_width="0dp"
+        android:layout_height="96dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="32dp"
+        android:text="NO DEVICE"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editText" />
+
+    <EditText
+        android:id="@+id/current_device"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="32dp"
+        android:autofillHints=""
+        android:ems="10"
+        android:inputType="textPersonName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/deviceList" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
